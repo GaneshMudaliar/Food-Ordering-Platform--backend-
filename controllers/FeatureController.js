@@ -1,5 +1,7 @@
 const Food = require("../models/Food");
 const User = require("../models/User");
+// const stripe = require("stripe")(process.env.STRIPE_KEY);
+
 
 
 // add item to cart
@@ -101,7 +103,7 @@ const getCart = async (req, res) => {
   }
 };
 
-// emove item fom carts
+// remove item fom carts
 
 const removeFromCart = async (req, res) => {
 
@@ -200,6 +202,44 @@ const decrementQuantity = async (req, res) => {
   }
 };
 
+//  checkout
+
+
+// const checkout = async (req, res) => {
+//   const userId = req.id;
+
+//   try {
+//     const cartItems = await Food.find({ userId });
+
+//     // const session = await stripe.checkout.sessions.create({
+//     //   payment_method_types: ["card"],
+//     //   mode: "payment",
+//     //   line_items: cartItems.map((item) => {
+//     //     return {
+//     //       price_data: {
+//     //         currency: "inr",
+//     //         product_data: {
+//     //           name: item.name,
+//     //           images: [item.image],
+//     //         },
+//     //         unit_amount: item.price * 100,
+//     //       },
+
+//           quantity: item.quantity,
+//         };
+//       }),
+//       success_url: "https://flavoro-clone.vercel.app/success",
+//       cancel_url: "https://flavoro-clone.vercel.app/",
+//     });
+
+//     res.json({ url: session.url });
+//   } catch (error) {
+//     return res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+
+
 
 // clear cart
 
@@ -239,5 +279,6 @@ module.exports = {
   removeFromCart,
   decrementQuantity,
   incrementQuantity,
-  clearCart
+  // checkout,
+  // clearCart
 }

@@ -1,7 +1,10 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 
+
+//  sign up
 
 const signup = async (req,res) => {
   try {
@@ -116,6 +119,7 @@ return res.status(500).json({
 
 const getUser = async(req,res) => {
   try {
+    
    const reqId = req.id;
 
    const user = await User.findById(reqId).select("-password");
@@ -139,9 +143,98 @@ const getUser = async(req,res) => {
 }
 
 
+
+// Rest password route
+
+
+const resetPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const generateOtp = Math.floor(Math.random() * 10000); // Generate a 4 digit OTP
+
+    let user = User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Please Signup" });
+    }
+
+    
+       var transport = nodemailer.createTransport({
+        host: "sandbox.smtp.mailtrap.io",
+        port: 2525,
+        auth: {
+        user: process.env.Mail_User,
+        pass: process.env.Mail_Pass
+     }
+    });
+
+    const info = await transporter.sendMail({
+      from: process.env.Email, // sender address
+      to: email, // list of receivers
+      subject: "New Otp has been generated", // Subject line
+      html: `<h3>Your Generated Otp is : <i>${generateOtp}</i></h3>`, // html body
+    });
+
+    if (info.messageId) {
+      await User.findOneAndUpdate(
+        { email },
+        {
+          $set: {
+            otp: generateOtp,
+          },
+        }
+      );
+      return res
+        .status(200)
+        .json({ success: true, message: "Otp has been sent to your email" });
+    }
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Verify Otp Route
+
+
+
+const verifyOtp = async (req, res) => {
+  const { otp, newPassword } = req.body;
+
+  try {
+
+    //   to secure new password
+
+    const securePassword = await bcrypt.hash(newPassword, 10);
+
+    let user = await User.findOneAndUpdate(
+      { otp },
+      {
+        $set: {
+          password: securePassword,
+          otp: 0,
+        },
+      }
+    );
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid Otp" });
+    }
+
+    return res.status(200).json({ success: true, message: "Password Updated" });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+
 module.exports = {
   signup,
   login,
   logout,
-  getUser
+  getUser,
+  resetPassword, 
+  verifyOtp
 }
+
